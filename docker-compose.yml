@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  client:
+    image: node:22-bookworm
+    container_name: client
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    command: sh -c "npm install && npm run dev"
+
+  server:
+    image: node:22-bookworm
+    container_name: server
+    working_dir: /app
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./server:/app
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    env_file:
+      - /server/.env
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - db
+
+  db:
+    container_name: postgres_db
+    image: postgres:17.0-bookworm
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - db:/var/lib/postgresql/data\
+
+volumes:
+  db:
+    driver: local

@@ -13,7 +13,158 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model TestModel {
-  id        Int     @id @default(autoincrement())
-  testField String?
+enum Role {
+  ADMIN
+  PATIENT
+  DOCTOR
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Weekday {
+  MONDAY    @map("MON")
+  TUESDAY   @map("TUE")
+  WEDNESDAY @map("WED")
+  THURSDAY  @map("THU")
+  FRIDAY    @map("FRI")
+  SATURDAY  @map("SAT")
+  SUNDAY    @map("SUN")
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CONFIRMED
+  CANCELLED
+  RESCHEDULED
+}
+
+model UserAccount {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique @db.VarChar(255)
+  username  String    @unique @db.VarChar(20)
+  password  String    @db.VarChar(30)
+  role      Role
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamp()
+  deletedAt DateTime? @map("deleted_at") @db.Timestamp()
+
+  patient     Patient?
+  doctor      Doctor?
+  userSession UserSession?
+}
+
+model Patient {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  firstName   String   @db.VarChar(100)
+  lastName    String   @db.VarChar(100)
+  gender      Gender
+  dateOfBirth DateTime @db.Date
+  contactNo   String   @db.VarChar(15)
+  address     String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt   DateTime @map("updated_at") @db.Timestamp()
+
+  appointment Appointment[]
+
+  userAccount UserAccount @relation(fields: [userId], references: [id])
+}
+
+model Doctor {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique
+  firstName      String   @db.VarChar(100)
+  lastName       String   @db.VarChar(100)
+  gender         Gender
+  dateOfBirth    DateTime @db.Date
+  contactNo      String   @db.VarChar(15)
+  address        String   @db.Text
+  specialization String   @db.VarChar(100)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamp()
+
+  schedule    Schedule[]
+  appointment Appointment[]
+
+  userAccount UserAccount @relation(fields: [userId], references: [id])
+}
+
+model ScheduleTime {
+  id        Int      @id @default(autoincrement())
+  startTime DateTime @db.Time()
+  endTime   DateTime @db.Time()
+
+  schedule Schedule[]
+}
+
+model Schedule {
+  id             Int       @id @default(autoincrement())
+  doctorId       Int
+  weekday        Weekday
+  scheduleTimeId Int
+  createdAt      DateTime  @default(now()) @db.Timestamp()
+  updatedAt      DateTime  @default(now()) @db.Timestamp()
+  deletedAt      DateTime? @db.Timestamp()
+
+  scheduleBlock ScheduleBlock[]
+  appointment   Appointment[]
+
+  doctor       Doctor       @relation(fields: [doctorId], references: [id])
+  scheduleTime ScheduleTime @relation(fields: [scheduleTimeId], references: [id])
+}
+
+model ScheduleBlock {
+  id         Int       @id @default(autoincrement())
+  scheduleId Int
+  blockDate  DateTime  @db.Date
+  createdAt  DateTime  @default(now()) @db.Timestamp()
+  updatedAt  DateTime  @default(now()) @db.Timestamp()
+  deletedAt  DateTime? @db.Timestamp()
+
+  schedule Schedule @relation(fields: [scheduleId], references: [id])
+}
+
+model Appointment {
+  id              Int      @id @default(autoincrement())
+  doctorId        Int
+  patientId       Int
+  scheduleId      Int
+  appointmentDate DateTime @db.Date
+  createdAt       DateTime @default(now()) @db.Timestamp()
+  updatedAt       DateTime @default(now()) @db.Timestamp()
+
+  appointmentStatusHistory AppointmentStatusHistory[]
+
+  doctor   Doctor   @relation(fields: [doctorId], references: [id])
+  patient  Patient  @relation(fields: [patientId], references: [id])
+  schedule Schedule @relation(fields: [scheduleId], references: [id])
+}
+
+model AppointmentStatusHistory {
+  id                Int               @id @default(autoincrement())
+  appointmentId     Int
+  status            AppointmentStatus
+  notifiedPatientAt DateTime?         @db.Timestamp()
+  notifiedDoctorAt  DateTime?         @db.Timestamp()
+  createdAt         DateTime          @default(now()) @db.Timestamp()
+  updatedAt         DateTime          @default(now()) @db.Timestamp()
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+}
+
+model UserSession {
+  id            Int      @id @default(autoincrement())
+  userAccountId Int      @unique
+  refreshToken  String   @db.VarChar(100)
+  loginAt       DateTime @db.Timestamp()
+  expiresAt     DateTime @db.Timestamp()
+  userAgent     String?  @db.VarChar(100)
+  createdAt     DateTime @default(now()) @db.Timestamp()
+  updatedAt     DateTime @default(now()) @db.Timestamp()
+
+  userAccount UserAccount @relation(fields: [userAccountId], references: [id])
 }

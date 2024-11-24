@@ -3,7 +3,7 @@ import { prisma } from '../config/prisma.js'
 export const fetchData = async (req, res) => {
 
     try {
-        const testData = await prisma.testModel.findFirst()
+        const testData = await prisma.UserAccount.findFirst()
         console.log(testData)
         res.send(testData)
     }
