@@ -1,21 +1,30 @@
 import { prisma } from '../config/prisma.js'
 
 async function main() {
-    // Seed data for TestModel
-    // const testData = [
-    //     { testField: 'Test Data 1' },
-    //     { testField: 'Test Data 2' },
-    //     { testField: 'Test Data 3' },
-    //     { testField: 'Test Data 4' },
-    //     { testField: 'Test Data 5' }
-    // ];
+    // ScheduleTime
+    // Add schedule time slots every 30 minutes.
+    const baseTime = new Date();
+    baseTime.setHours(0);
+    baseTime.setMinutes(0);
+    baseTime.setSeconds(0);
 
-    // Insert the seed data into the TestModel table
-    // for (const data of testData) {
-    //     await prisma.testModel.create({
-    //         data: data
-    //     });
-    // }
+    const startTime = new Date();
+    startTime.setTime(baseTime.getTime());
+
+    const endTime = new Date();
+    endTime.setTime(baseTime.getTime() + 30 * 60 * 1000);
+
+    for (let ctr = 0; ctr < 48; ctr++) {
+        await prisma.scheduleTime.create({
+            data: {
+                startTime,
+                endTime
+            }
+        });
+
+        startTime.setTime(endTime.getTime());
+        endTime.setTime(startTime.getTime() + 30 * 60 * 1000);
+    }
 
     console.log('Seeding completed.');
 }
